@@ -1,15 +1,14 @@
 from shortGPT.config.path_utils import get_program_path
-from shortGPT.audio.eleven_voice_module import ElevenLabsVoiceModule
 from shortGPT.config.asset_db import AssetDatabase
-from shortGPT.config.api_db import get_api_key
 from shortGPT.database.content_database import ContentDatabase
+from shortGPT.audio.voice_module import VoiceModule
 from shortGPT.config.languages import Language
 from abc import ABC
 import os
 CONTENT_DB = ContentDatabase()
 
 class AbstractContentEngine(ABC):
-    def __init__(self, short_id: str, content_type:str, language: Language, voiceName: str):
+    def __init__(self, short_id: str, content_type:str, language: Language, voiceModule: VoiceModule):
         if short_id:
             self.dataManager = CONTENT_DB.getContentDataManager(
                 short_id, content_type
@@ -20,7 +19,7 @@ class AbstractContentEngine(ABC):
         self.initializeMagickAndFFMPEG()
         self.prepareEditingPaths()
         self._db_language = language.value
-        self.voiceModule = ElevenLabsVoiceModule(get_api_key("ELEVEN LABS"), voiceName if voiceName else "Antoni")
+        self.voiceModule = voiceModule
         self.assetStore = AssetDatabase()
         self.stepDict = {}
         self.logger = lambda _: print(_)
@@ -59,7 +58,7 @@ class AbstractContentEngine(ABC):
     def isShortDone(self):
         return self._db_ready_to_upload
 
-    def makeShort(self):
+    def makeContent(self):
         while (not self.isShortDone()):
             currentStep = self._db_last_completed_step + 1
             if currentStep not in self.stepDict:
